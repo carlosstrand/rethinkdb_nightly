@@ -151,7 +151,7 @@ function sendToS3(options, directory, target, callback) {
   s3client = new AWS.S3(serviceConf)
 
   log('Attemping to upload ' + target + ' to the ' + options.bucket + ' s3 bucket');
-  var params = {Body: require('fs').createReadStream(sourceFile), Key: path.join(destination, target), Bucket: options.bucket};
+  var params = {Body: require('fs').createReadStream(sourceFile), Key: '/' + path.join(destination, target), Bucket: options.bucket};
   s3client.upload(params, function (err, data) {
     if (err) {
       return callback(err);
