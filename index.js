@@ -151,7 +151,7 @@ function sendToS3(options, directory, target, callback) {
   s3client = new AWS.S3(serviceConf)
 
   log('Attemping to upload ' + target + ' to the ' + options.bucket + ' s3 bucket');
-  var params = {Body: require('fs').createReadStream(sourceFile), Key: generateFileKey('tar.gz'), Bucket: options.bucket};
+  var params = {Body: require('fs').createReadStream(sourceFile), Key: target, Bucket: options.bucket};
   s3client.upload(params, function (err, data) {
     if (err) {
       return callback(err);
@@ -202,8 +202,3 @@ module.exports = {
   sync: sync,
   log: log
 };
-
-function generateFileKey (ext) {
-  let seed = String(Math.floor(Math.random() * 10) + Date.now());
-  return require('crypto').createHash('md5').update(seed).digest('hex').substr(2, 6) + '.' + ext;
-}
