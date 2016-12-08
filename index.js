@@ -144,6 +144,7 @@ function sendToS3(options, directory, target, callback) {
   var serviceConf = {
     apiVersion: '2006-03-01',
     accessKeyId: options.key,
+    signatureVersion: 'v4',
     secretAccessKey: options.secret
   };
 
