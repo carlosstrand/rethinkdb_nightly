@@ -6,7 +6,7 @@
   "bin": {
     "rethinkdb_nightly": "./bin/rethinkdb_nightly.js"
   },
-  "preferGlobal": "true",
+  "preferGlobal": true,
   "scripts": {
     "start": "node ./bin/rethinkdb_nightly.js ./config.json",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -17,8 +17,8 @@
     "S3",
     "backup"
   ],
-  "author": [
-    "Rob Conery <rob@conery.io>",
+  "author": "Rob Conery <rob@conery.io>",
+  "contributors": [
     "Swift <theycallmeswift@gmail.com>"
   ],
   "license": "Beerware",
