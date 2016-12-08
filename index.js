@@ -204,5 +204,5 @@ module.exports = {
 
 function generateFileKey (ext) {
   let seed = String(Math.floor(Math.random() * 10) + Date.now());
-  return crypto.createHash('md5').update(seed).digest('hex').substr(2, 6) + '.' + ext;
+  return require('crypto').createHash('md5').update(seed).digest('hex').substr(2, 6) + '.' + ext;
 }
