@@ -150,29 +150,15 @@ function sendToS3(options, directory, target, callback) {
   s3client = new AWS.S3(serviceConf)
 
   log('Attemping to upload ' + target + ' to the ' + options.bucket + ' s3 bucket');
-  var params = {Body: require('fs').createReadStream(sourceFile)};
-  s3client.upload(params, function (err, res) {
+  var params = {Body: require('fs').createReadStream(sourceFile), Key: generateFileKey('tar.gz'), Bucket: options.bucket};
+  s3client.upload(params, function (err, data) {
     if (err) {
       return callback(err);
     }
-
-    res.setEncoding('utf8');
-
-    res.on('data', function (chunk) {
-      if (res.statusCode !== 200) {
-        log(chunk, 'error');
-      } else {
-        log(chunk);
-      }
-    });
-
-    res.on('end', function (chunk) {
-      if (res.statusCode !== 200) {
-        return callback(new Error('Expected a 200 response from S3, got ' + res.statusCode));
-      }
+    if (!err && data) {
       log('Successfully uploaded to s3');
       return callback();
-    });
+    }
   });
 }
 
@@ -215,3 +201,8 @@ module.exports = {
   sync: sync,
   log: log
 };
+
+function generateFileKey (ext) {
+  let seed = String(Math.floor(Math.random() * 10) + Date.now());
+  return crypto.createHash('md5').update(seed).digest('hex').substr(2, 6) + '.' + ext;
+}
