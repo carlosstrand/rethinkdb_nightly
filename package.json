@@ -1,6 +1,6 @@
 {
   "name": "rethinkdb_nightly",
-  "version": "0.0.6",
+  "version": "0.1.0",
   "description": "A tool to help backup your rethinkdb cluster to s3.",
   "main": "index.js",
   "bin": {
@@ -19,7 +19,8 @@
   ],
   "author": "Rob Conery <rob@conery.io>",
   "contributors": [
-    "Swift <theycallmeswift@gmail.com>"
+    "Swift <theycallmeswift@gmail.com>",
+    "Lee Turner <lvturner@me.com>"
   ],
   "license": "Beerware",
   "dependencies": {

@@ -95,9 +95,9 @@ function dbDump(options, directory, archiveName, callback) {
   ];
   //set the filename to now
 
-  if (options.auth_key) {
-    rethinkOptions.push('-a');
-    rethinkOptions.push(options.auth_key);
+  if (options.pw_file) {
+    rethinkOptions.push('--password-file');
+    rethinkOptions.push(options.pw_file);
   }
 
   log('Starting dump of ' + options.db, 'info');
