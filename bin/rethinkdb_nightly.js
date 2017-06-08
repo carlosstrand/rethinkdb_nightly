@@ -8,7 +8,6 @@ var cli = require('cli')
   , backup = require('../')
   , cronJob = require('cron').CronJob
   , fs = require("fs")
-  , path = require("path")
   , pkg = require('../package.json')
   , crontab = "0 0 * * *"
   , timezone = "America/New_York"
@@ -51,7 +50,7 @@ if(options.now) {
     if(config.cron.crontab) {
       crontab = config.cron.crontab
     } else if(config.cron.time) {
-      time = config.cron.time.split(':')
+      time = config.cron.time.split(':');
       crontab = util.format('%d %d * * *', time[0], time[1]);
     }
 

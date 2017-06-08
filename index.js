@@ -4,8 +4,7 @@ var fs = require("fs");
 var path = require("path");
 
 var exec = require('child_process').exec,
-  spawn = require('child_process').spawn,
-  path = require('path');
+  spawn = require('child_process').spawn;
 
 /**
  * log
@@ -96,9 +95,9 @@ function dbDump(options, directory, archiveName, callback) {
   ];
   //set the filename to now
 
-  if (options.auth_key) {
-    rethinkOptions.push('-a');
-    rethinkOptions.push(options.auth_key);
+  if (options.pw_file) {
+    rethinkOptions.push('--password-file');
+    rethinkOptions.push(options.pw_file);
   }
 
   log('Starting dump of ' + options.db, 'info');
@@ -111,9 +110,11 @@ function dbDump(options, directory, archiveName, callback) {
   dump.stderr.on('data', function (data) {
     log(data, 'error');
   });
+
   dump.on("error", function (err) {
     log(err, 'error');
-  })
+  });
+
   dump.on('exit', function (code) {
     if (code === 0) {
       log('dump executed successfully', 'info');
@@ -148,7 +149,7 @@ function sendToS3(options, directory, target, callback) {
     secretAccessKey: options.secret
   };
 
-  s3client = new AWS.S3(serviceConf)
+  s3client = new AWS.S3(serviceConf);
 
   log('Attemping to upload ' + target + ' to the ' + options.bucket + ' s3 bucket');
   var params = {Body: require('fs').createReadStream(sourceFile), Key: path.join(destination, target).substr(1), Bucket: options.bucket};
