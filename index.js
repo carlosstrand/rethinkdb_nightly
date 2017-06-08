@@ -3,9 +3,8 @@ var util = require("util");
 var fs = require("fs");
 var path = require("path");
 
-var exec = require('child_process').exec
-  , spawn = require('child_process').spawn
-  , path = require('path');
+var exec = require('child_process').exec,
+  spawn = require('child_process').spawn;
 
 /**
  * log
@@ -16,9 +15,9 @@ var exec = require('child_process').exec
  * @param tag      (optional) the tag to log with.
  */
 function log(message, tag) {
-  var util = require('util')
-    , color = require('cli-color')
-    , tags, currentTag;
+  var util = require('util'),
+    color = require('cli-color'),
+    tags, currentTag;
 
   tag = tag || 'info';
 
@@ -28,7 +27,9 @@ function log(message, tag) {
     info: color.cyanBright
   };
 
-  currentTag = tags[tag] || function(str) { return str; };
+  currentTag = tags[tag] || function (str) {
+    return str;
+  };
   util.log((currentTag("[" + tag + "] ") + message).replace(/(\n|\r|\r\n)$/, ''));
 }
 
@@ -40,7 +41,7 @@ function log(message, tag) {
  * @param databaseName   The name of the database
  */
 function getArchiveName(databaseName) {
-  return util.format("%s_%s_dump.tar.gz",databaseName, moment().format("YYYY-MM-DD"))
+  return util.format("%s_%s_dump.tar.gz", databaseName, moment().format("YYYY-MM-DD"))
 }
 
 /* removeRF
@@ -53,22 +54,23 @@ function getArchiveName(databaseName) {
 function removeRF(target, callback) {
   var fs = require('fs');
 
-  callback = callback || function() { };
+  callback = callback || function () {};
 
-  fs.exists(target, function(exists) {
+  fs.exists(target, function (exists) {
     if (!exists) {
       return callback(null);
     }
     log("Removing " + target, 'warn');
-    exec( 'rm -rf ' + target, callback);
+    exec('rm -rf ' + target, callback);
   });
 }
-function checkTempDir(tmp, callback){
-  fs.exists(tmp, function(exists){
-    if(!exists){
+
+function checkTempDir(tmp, callback) {
+  fs.exists(tmp, function (exists) {
+    if (!exists) {
       fs.mkdir(tmp, callback)
-    }else{
-      callback(null,true);
+    } else {
+      callback(null, true);
     }
   });
 }
@@ -82,21 +84,20 @@ function checkTempDir(tmp, callback){
  * @param callback   callback(err)
  */
 function dbDump(options, directory, archiveName, callback) {
-  var dump
-    , rethinkOptions;
+  var dump, rethinkOptions;
 
-  callback = callback || function() { };
+  callback = callback || function () {};
 
-  rethinkOptions= [
+  rethinkOptions = [
     'dump',
     '-c', options.host + ':' + options.port,
-    '-f', path.join(directory,archiveName)
+    '-f', path.join(directory, archiveName)
   ];
   //set the filename to now
 
-  if(options.auth_key) {
-    rethinkOptions.push('-a');
-    rethinkOptions.push(options.auth_key);
+  if (options.pw_file) {
+    rethinkOptions.push('--password-file');
+    rethinkOptions.push(options.pw_file);
   }
 
   log('Starting dump of ' + options.db, 'info');
@@ -109,11 +110,13 @@ function dbDump(options, directory, archiveName, callback) {
   dump.stderr.on('data', function (data) {
     log(data, 'error');
   });
-  dump.on("error", function(err){
+
+  dump.on("error", function (err) {
     log(err, 'error');
-  })
+  });
+
   dump.on('exit', function (code) {
-    if(code === 0) {
+    if (code === 0) {
       log('dump executed successfully', 'info');
       callback(null);
     } else {
@@ -133,42 +136,31 @@ function dbDump(options, directory, archiveName, callback) {
  */
 function sendToS3(options, directory, target, callback) {
   console.log(directory);
-  var knox = require('knox')
-    , sourceFile = path.join(directory, target)
-    , s3client
-    , destination = options.destination || '/';
+  var AWS = require('aws-sdk'),
+    sourceFile = path.join(directory, target),
+    s3client, destination = options.destination || '/';
 
-  callback = callback || function() { };
+  callback = callback || function () {};
 
-  s3client = knox.createClient({
-    key: options.key,
-    secret: options.secret,
-    bucket: options.bucket
-  });
+  var serviceConf = {
+    apiVersion: '2006-03-01',
+    accessKeyId: options.key,
+    signatureVersion: 'v4',
+    secretAccessKey: options.secret
+  };
+
+  s3client = new AWS.S3(serviceConf);
 
   log('Attemping to upload ' + target + ' to the ' + options.bucket + ' s3 bucket');
-  s3client.putFile(sourceFile, path.join(destination, target),  function(err, res){
-    if(err) {
+  var params = {Body: require('fs').createReadStream(sourceFile), Key: path.join(destination, target).substr(1), Bucket: options.bucket};
+  s3client.upload(params, function (err, data) {
+    if (err) {
       return callback(err);
     }
-
-    res.setEncoding('utf8');
-
-    res.on('data', function(chunk){
-      if(res.statusCode !== 200) {
-        log(chunk, 'error');
-      } else {
-        log(chunk);
-      }
-    });
-
-    res.on('end', function(chunk) {
-      if (res.statusCode !== 200) {
-        return callback(new Error('Expected a 200 response from S3, got ' + res.statusCode));
-      }
+    if (!err && data) {
       log('Successfully uploaded to s3');
       return callback();
-    });
+    }
   });
 }
 
@@ -183,22 +175,22 @@ function sendToS3(options, directory, target, callback) {
  * @param callback        callback(err)
  */
 function sync(rethinkdbConfig, s3Config, callback) {
-  var tmpDir = path.join(process.cwd(), 'temp')
-    , backupDir = path.join(tmpDir, rethinkdbConfig.db)
-    , archiveName = getArchiveName(rethinkdbConfig.db)
-    , async = require('async');
+  var tmpDir = path.join(process.cwd(), 'temp'),
+    backupDir = path.join(tmpDir, rethinkdbConfig.db),
+    archiveName = getArchiveName(rethinkdbConfig.db),
+    async = require('async');
 
-  callback = callback || function() { };
+  callback = callback || function () {};
 
   async.series([
     async.apply(checkTempDir, tmpDir),
     async.apply(removeRF, backupDir),
     async.apply(removeRF, path.join(tmpDir, archiveName)),
-    async.apply(dbDump, rethinkdbConfig, tmpDir,archiveName),
+    async.apply(dbDump, rethinkdbConfig, tmpDir, archiveName),
     //async.apply(compressDirectory, tmpDir, rethinkdbConfig.db, archiveName),
     async.apply(sendToS3, s3Config, tmpDir, archiveName)
-  ], function(err) {
-    if(err) {
+  ], function (err) {
+    if (err) {
       log(err, 'error');
     } else {
       log('Successfully backed up ' + rethinkdbConfig.db);
@@ -207,4 +199,7 @@ function sync(rethinkdbConfig, s3Config, callback) {
   });
 }
 
-module.exports = { sync: sync, log: log };
+module.exports = {
+  sync: sync,
+  log: log
+};
